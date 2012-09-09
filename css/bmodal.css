@@ -1,0 +1,76 @@
+.modal{
+	background-color: #FFFEDC;
+	border: 1px solid #E4CFB2;
+}
+
+.modal .modal-header{
+	padding: 10px 0px 10px 8px;
+	line-height: 30px;
+	background: #63584C;
+	height: 30px;
+	color:#F0B22A;
+	font-family: Myriad Pro;
+	font-size:15pt;
+}
+
+.modal-header h3, .modal-header .modal-close{
+	display:inline-block;
+	font-size: 24px;
+	
+}
+.modal-header h3{
+	font-size: 18px;
+	line-height: 30px;
+	margin-right: 10px;
+	font-weight: normal;
+	
+}
+.modal .modal-close{
+	margin-right:10px;
+	cursor: pointer;
+	color: white;
+	float:right;
+	line-height:26px;
+}
+
+.modal .modal-close:hover{
+	color:maroon;
+}
+.modal-status{
+	border-bottom: 3px ridge lightGrey;
+	background:grey;
+	height:40px;
+	line-height:40px;
+	font-weight:bold;
+	font-size:22px;
+	text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+	border: 2px solid #FBEED5;
+	background-color: #FCF8E3;
+	color: #C09853;
+}
+
+.modal-status.success{
+	color: #468847;
+	background-color: #DFF0D8;
+	border-color: #D6E9C6;
+}
+.modal-status.error{
+	color: #B94A48;
+	background-color: #F2DEDE;
+	border-color: #EED3D7;
+}
+.modal-status-dismiss{
+	cursor:pointer;
+	float: right;
+font-size: 22px;
+font-weight: bold;
+line-height: 40px;
+color: black;
+text-shadow: 0 1px 0 white;
+opacity: 0.4;
+filter: alpha(opacity=40);
+}
+.modal-status-dismiss:hover{
+	opacity: 1;
+filter: alpha(opacity=100);
+}
