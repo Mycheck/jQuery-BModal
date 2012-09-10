@@ -1,100 +1,97 @@
 /**
- *
- * A reusable AJAX modal interface created on the GO.
- *
- * @namespace MycheckModal
- *
- * @property jQuery element - the element that was clicked
- * @property String url - the url to take the data from
- * @propety blackout - the backdrop to the modal (ui blocker)
- * @property modal - the modal containing the page requested (automatically a GET request)
- *
- * Html markup example:
- * <HTMLELEMENT rel='modal' data-url='/myurl/'>click here</HTMLELEMENT>
- *
- * Please note: any forms on the requested URL will be processed in the modal ( MycheckModal.formSubmissionInit() )
- * @author Itai (itai@mycheck.co.il)
- */
+*
+* A reusable AJAX modal interface created on the GO.
+*
+* @namespace MycheckModal
+*
+* @property jQuery element - the element that was clicked
+* @property String url - the url to take the data from
+* @propety blackout - the backdrop to the modal (ui blocker)
+* @property modal - the modal containing the page requested (automatically a GET request)
+*
+* Html markup example:
+* <HTMLELEMENT rel='modal' data-url='/myurl/'>click here</HTMLELEMENT>
+*
+* Please note: any forms on the requested URL will be processed in the modal ( MycheckModal.formSubmissionInit() )
+* @author Itai (itai@mycheck.co.il)
+*/
 MycheckModal = {
-		element : null,
-		url     : null,
-		blackout: null,
-		modal   : null,
-		dlg     : null,
+		currentId : 1,
+		modals   : {},
 		status  : null,
 
 };
-/**
- * Modal constructor function
- */
-MycheckModal.__construct = function(element){
-	this.removeResidue();
+MycheckModal.modal = function(element){
 	
+	this.id = MycheckModal.currentId;
+	MycheckModal.blackout.css("z-index", 5000 + this.id).fadeIn(250);
 	this.element = element;
 	this.url = this.element.attr("data-url");
-
-	// 	Build backdrop
-	this.blackout = $("<div class='modal-backdrop'></div>")
-	.attr("style", 'left:0px;top:0px;position:absolute;background:black;')
-	.css("opacity", "0.5")
-	.css("height", $(document).height() + 'px')
-	.css("width", $(document).width() + 'px')
-	.css("z-index", "5000");
-	$("body").append(this.blackout);
-	var title = "";
+	MycheckModal.modals[this.id] = this;
+	
+	this.title = "";
 	if (typeof this.element.attr("data-title") != "undefined"){
-		title = this.element.attr("data-title");
+		this.title = this.element.attr("data-title");
 	}
-	var style = "";
+	this.style = "";
 	if (typeof this.element.attr("data-style") != "undefined"){
-		style = this.element.attr("data-style");
+		this.style = this.element.attr("data-style");
 	}
-	var contentStyle = "";
+	this.contentStyle = "";
 	if (typeof this.element.attr("data-content-style") != "undefined"){
-		contentStyle = this.element.attr("data-content-style");
+		this.contentStyle = this.element.attr("data-content-style");
 	}
 	
-	this.modal = $("<div class='modal hide'><div class='modal-header'><h3>" + title + "</h3><div class='modal-close'>x</div></div><div class='modal-content'></div></div>")
-	.attr("style", 'left:35%;top:25%;position:fixed;' + style)
-	.css("z-index", "5001")
+	
+	this.modal = $("<div class='modal hide'><div class='modal-header'><h3>" + this.title + "</h3><div class='modal-close'>x</div></div><div class='modal-content'></div></div>")
+	.attr("style", 'left:35%;top:25%;position:fixed;' + this.style)
+	.attr("data-modal-id", this.id)
+	.css("z-index", 5000 + this.id)
 	.addClass("shadow");
 	$("body").append(this.modal);
 	this.modal.fadeIn(250);
 	// load modal with data
-	this.modal.find(".modal-content").attr("style", contentStyle).load(this.url, function(){
-		MycheckModal.centerize();
-		MycheckModal.formSubmissionInit();
+	this.modal.find(".modal-content").attr("style", this.contentStyle).load(this.url, function(){
+		MycheckModal.centerize(MycheckModal.modals[MycheckModal.getId($(this))].modal);
+		MycheckModal.formSubmissionInit(MycheckModal.modals[MycheckModal.getId($(this))].modal);
 		});
 	// destruct modal event handlers
-	this.blackout.click( function(){
-	    MycheckModal.__destruct();
+	MycheckModal.blackout.click( function(){
+		MycheckModal.__destruct("all");
 	});
-
+	
 	this.modal.find(".modal-close").click( function(){
-	    MycheckModal.__destruct();
+		MycheckModal.__destruct(MycheckModal.modals[MycheckModal.getId($(this))].modal);
 	});
-	
-	
-	$(window).bind("resize.MycheckModal", function(){
-		MycheckModal.centerize();
-	})
-};
+	/*
+	$(window).bind("resize.MycheckModal." + MycheckModal.getId($(this)), function(){
+		MycheckModal.centerize(MycheckModal.modals[MycheckModal.getId($(this))].modal);
+	});
+	*/
+	MycheckModal.currentId++;
+}
 /**
- * MycheckModal.formSubmissionInit()
- *
- * attach event handler to modal form submission.
- * should only be called after we populated the modal with content.
- *
- * assumptions:
- * Target page should return a JSON string containing atleast:
- * success - [true | false] - true will default to destroy the modal
- * message - the message to display in case of success/failure.
- *
- * @return void
- */
-MycheckModal.formSubmissionInit = function()
+* MycheckModal.formSubmissionInit()
+*
+* attach event handler to modal form submission.
+* should only be called after we populated the modal with content.
+*
+* assumptions:
+* Target page should return a JSON string containing atleast:
+* success - [true | false] - true will default to destroy the modal
+* message - the message to display in case of success/failure.
+*
+* @return void
+*/
+
+MycheckModal.getId = function(element){
+	if (element.hasClass("modal")) return element.attr("data-modal-id");
+	return element.parents(".modal").attr("data-modal-id");
+}
+
+MycheckModal.formSubmissionInit = function(element)
 {
-	var form = this.modal.find("form");
+	var form = element.find("form");
 	if (form.attr("enctype")){
 		if (form.attr("enctype").toLowerCase() == 'multipart/form-data')
 		{
@@ -108,54 +105,63 @@ MycheckModal.formSubmissionInit = function()
 		var formStr = $(this).serialize();
 		// var action  = $(this).attr("action");
 		var method  = $(this).attr("method").toUpperCase();
-		var url = MycheckModal.url;
+		var url = $(this).attr("action");
 		var buttons;
 		$.ajax({
 			  type: method,
 			  url: url,
 			  data: formStr,
 			  success: function(data){
-				  MycheckModal.removeResidue();
-					MycheckModal.processPostResponse(data);
+				MycheckModal.removeResidue();
+				MycheckModal.processPostResponse(data);
 			},
 			dataType: "json"
 		});
 	});
 };
 /**
- * MycheckModal.centerize()
- *
- * centerize the modal in the middle of the viewport.
- *
- */
-MycheckModal.centerize = function(){
-	offsetX = ($(window).width() - this.modal.width()) / 2;
-	offsetY = ($(window).height() - this.modal.height()) / 2;
-	this.modal.css("left", offsetX + 'px');
-	this.modal.css("top", offsetY + 'px');
+* MycheckModal.centerize()
+*
+* centerize the modal in the middle of the viewport.
+*
+*/
+MycheckModal.centerize = function(element){
+	offsetX = ($(window).width() - element.width()) / 2;
+	offsetY = ($(window).height() - element.height()) / 2;
+	element.css("left", offsetX + 'px');
+	element.css("top", offsetY + 'px');
 };
-MycheckModal.__destruct = function(){
-	this.element = null;
-	this.url = null;
-	$(window).unbind("resize.MycheckModal");
-	this.blackout.fadeOut(150, function(){
-		MycheckModal.blackout.remove();
-		MycheckModal.blackout = null;
-		} );
-	this.modal.fadeOut(150, function(){
-		MycheckModal.modal.remove();
-		MycheckModal.modal = null;
-		} );
+MycheckModal.__destruct = function(element){
+	if (element == "all"){
+		$.each(MycheckModal.modals, function(){
+			this.modal.fadeOut(150, function(){this.remove});
+		});
+		MycheckModal.blackout.fadeOut(150);
+		MycheckModal.modals = {};
+		MycheckModal.currentId = 1;
+		return;
+		
+	}
+	modalId = parseInt(MycheckModal.getId(element));
+	MycheckModal.blackout.css("z-index", 5000 + modalId - 1);
+	$(window).unbind("resize.MycheckModal." + modalId);
+	element.fadeOut(150, function(){
+		element.remove();
+		element = null;
+		});
+	MycheckModal.currentId--;
+	delete MycheckModal.modals[modalId];
+	if ($.isEmptyObject(MycheckModal.modals)) MycheckModal.blackout.fadeOut(150);
 };
 MycheckModal.hideStatus = function(){
 	this.status.slideUp(250, function(){MycheckModal.status.remove()});
-}
+};
 MycheckModal.processPostResponse = function(data){
 	this.status = $("<div class='modal-status'><div class='container'><span class='message'></span><span class='modal-status-dismiss'>x</span></div></div>")
 	.attr("style", 'left:0px;top:0px;position:fixed;').hide()
 	//.hide()
 	.css("width", $(document).width() + 'px')
-	.css("z-index", "5001");
+	.css("z-index", "9000");
 	$("body").prepend(this.status);
 	this.status.find(".modal-status-dismiss").bind("click.MycheckModal", function(){
 		MycheckModal.hideStatus();
@@ -177,11 +183,25 @@ MycheckModal.processPostResponse = function(data){
 	}
 }
 
+MycheckModal.init = function(){
+	MycheckModal.blackout =  $("<div class='modal-backdrop'></div>")
+	.attr("style", 'left:0px;top:0px;position:absolute;background:black;')
+	.css("opacity", "0.5")
+	.css("height", $(document).height() + 'px')
+	.css("width", $(document).width() + 'px')
+	.css("z-index", "5000")
+	.hide();
+	$("body").append(MycheckModal.blackout);
+}
+
+$(document).ready(function(){
+	MycheckModal.init();
+});
 MycheckModal.removeResidue = function(){
 	$(".modal-status").remove();
 }
 /* bind modal constructor */
 $("[rel=modal]").live("click", function(e){
 	e.preventDefault();
-	MycheckModal.__construct($(this));
+	new MycheckModal.modal($(this));
 });

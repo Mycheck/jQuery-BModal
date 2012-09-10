@@ -1,3 +1,8 @@
+*{
+	margin:0px;
+	padding:0px;
+}
+/* Modal */
 .modal{
 	background-color: #FFFEDC;
 	border: 1px solid #E4CFB2;
